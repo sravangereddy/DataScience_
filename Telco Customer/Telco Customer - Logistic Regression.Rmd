@@ -1,0 +1,259 @@
+---
+title: "Telco Customer Churn Prediction - Logistic Regression"
+output: html_notebook
+---
+Loading required packages
+```{r}
+library(ggplot2)
+library(corrplot)
+```
+
+
+```{r}
+getwd()
+```
+
+Reading input file
+```{r}
+data.set.orig = read.csv(file = "Datasets/Teleco_Cust_Attr.csv", header = T)
+```
+```{r}
+head(data.set.orig)
+```
+
+
+```{r}
+summary(data.set.orig)
+```
+Data Preprocessing
+
+Dropping customerID variable
+
+```{r}
+data.set.orig$customerID = NULL
+```
+
+Checking for Missing Values and imputing
+```{r}
+sapply(data.set.orig, function(x) sum(is.na(x)))
+```
+
+Handling NAs in TotalCharges
+```{r}
+data.set.orig$TotalCharges = ifelse(is.na(data.set.orig$TotalCharges),
+                                    data.set.orig$tenure*data.set.orig$MonthlyCharges,
+                                    data.set.orig$TotalCharges)
+sapply(data.set.orig, function(x) sum(is.na(x)))
+```
+
+Converting SeniorCitizen to factor
+```{r}
+data.set.orig$SeniorCitizen = as.factor(data.set.orig$SeniorCitizen)
+```
+
+EDA
+
+```{r}
+i=1
+for(i in 1:ncol(data.set.orig)){
+  #print(colnames(data.set.orig)[i])
+  if(is.factor(data.set.orig[,i])){
+    print(ggplot(data.set.orig,aes_string("Churn",colnames(data.set.orig)[i]))
+          +geom_jitter(aes(col=Churn)))
+  }
+}
+```
+
+```{r}
+i=1
+for(i in 1:ncol(data.set.orig)){
+  #print(colnames(data.set.orig)[i])
+  if(is.numeric(data.set.orig[,i])){
+    print(ggplot(data.set.orig,aes_string(colnames(data.set.orig)[i]))
+          +geom_density())
+  }
+}
+```
+
+```{r}
+nums = unlist(lapply(data.set.orig, is.numeric))  
+temp = data.set.orig[,nums]
+price.corplot = cor(temp)
+corrplot(price.corplot, method="number")  
+```
+```{r}
+print(ggplot(data.set.orig,aes(Churn,tenure))+geom_boxplot())
+```
+
+
+Dropping variables tenure and MonthlyCharges
+```{r}
+#data.set.orig$tenure = NULL
+#data.set.orig$MonthlyCharges = NULL
+```
+
+```{r}
+head(data.set.orig)
+```
+
+Transforming TotalCharges to Normal Distribution
+```{r}
+print(ggplot(data.set.orig,aes(TotalCharges))+geom_density())
+print(ggplot(data.set.orig,aes(sqrt(TotalCharges)))+geom_density())
+print(ggplot(data.set.orig,aes(Churn,TotalCharges))+geom_boxplot())
+```
+
+```{r}
+print(ggplot(data.set.orig,aes(tenure))+geom_density())
+print(ggplot(data.set.orig,aes(sin(tenure)))+geom_density())
+print(ggplot(data.set.orig,aes(Churn,tenure))+geom_boxplot())
+print(ggplot(data.set.orig[data.set.orig$tenure<30,],aes((tenure)))+geom_density())
+print(ggplot(data.set.orig[data.set.orig$tenure<30,],aes(sqrt(tenure)))+geom_density())
+```
+```{r}
+print(ggplot(data.set.orig,aes(MonthlyCharges))+geom_density())
+print(ggplot(data.set.orig,aes(sqrt(MonthlyCharges)))+geom_density())
+print(ggplot(data.set.orig,aes(Churn,MonthlyCharges))+geom_boxplot())
+```
+Subsetting Required Variables
+```{r}
+colnames(data.set.orig)
+data.set = data.set.orig[,c("SeniorCitizen","Dependents","PhoneService","MultipleLines","InternetService" , "OnlineSecurity"  , "OnlineBackup","DeviceProtection" ,"TechSupport"   ,   "StreamingTV" ,     "StreamingMovies" , "Contract","PaperlessBilling", "PaymentMethod"  , "tenure","Churn")]
+```
+
+
+Test Train Split
+```{r}
+sample = sample(1:nrow(data.set),0.7*nrow(data.set))
+train.data.set = data.set[sample,]
+test.data.set = data.set[-sample,]
+rbind(nrow(data.set),nrow(train.data.set),nrow(test.data.set))
+
+```
+
+Applying Logistic Regression
+```{r}
+m1 <- glm (Churn ~ ., data = train.data.set, family = binomial)
+summary(m1)
+```
+```{r}
+p1 = predict(m1, train.data.set, type = 'response')
+t1 = table(train.data.set$Churn, p1 > 0.3)
+t1
+TN1 = t1[1]
+FN1 = t1[2]
+FP1 = t1[3]
+TP1 = t1[4]
+
+TN1
+FN1
+FP1
+TP1
+
+Accuary1 = (TP1+TN1)/(TP1+TN1+FP1+FN1)
+Precision1 = (TP1)/(TP1+FP1)
+Recall1 = (TP1)/(TP1+FN1)
+F11 = 2*Precision1*Recall1/(Precision1+Recall1)
+
+Accuary1
+Precision1
+Recall1
+F11
+```
+
+```{r}
+p1 = predict(m1, test.data.set, type = 'response')
+t1 = table(test.data.set$Churn, p1 > 0.3)
+t1
+TN1 = t1[1]
+FN1 = t1[2]
+FP1 = t1[3]
+TP1 = t1[4]
+
+TN1
+FN1
+FP1
+TP1
+
+Accuary1 = (TP1+TN1)/(TP1+TN1+FP1+FN1)
+Precision1 = (TP1)/(TP1+FP1)
+Recall1 = (TP1)/(TP1+FN1)
+F11 = 2*Precision1*Recall1/(Precision1+Recall1)
+
+Accuary1
+Precision1
+Recall1
+F11
+```
+
+Model 2
+Subsetting Required Variables
+```{r}
+colnames(data.set.orig)
+data.set = data.set.orig[,c("SeniorCitizen","Dependents","Partner","PhoneService","MultipleLines","InternetService" , "OnlineSecurity"  , "OnlineBackup","DeviceProtection"  ,   "StreamingTV" , "Contract", "PaymentMethod"  , "tenure","Churn")]
+```
+
+
+Test Train Split
+```{r}
+sample = sample(1:nrow(data.set),0.7*nrow(data.set))
+train.data.set = data.set[sample,]
+test.data.set = data.set[-sample,]
+rbind(nrow(data.set),nrow(train.data.set),nrow(test.data.set))
+
+```
+
+Applying Logistic Regression
+```{r}
+m1 <- glm (Churn ~ ., data = train.data.set, family = binomial)
+summary(m1)
+```
+```{r}
+p1 = predict(m1, train.data.set, type = 'response')
+t1 = table(train.data.set$Churn, p1 > 0.3)
+t1
+TN1 = t1[1]
+FN1 = t1[2]
+FP1 = t1[3]
+TP1 = t1[4]
+
+TN1
+FN1
+FP1
+TP1
+
+Accuary1 = (TP1+TN1)/(TP1+TN1+FP1+FN1)
+Precision1 = (TP1)/(TP1+FP1)
+Recall1 = (TP1)/(TP1+FN1)
+F11 = 2*Precision1*Recall1/(Precision1+Recall1)
+
+Accuary1
+Precision1
+Recall1
+F11
+```
+
+```{r}
+p1 = predict(m1, test.data.set, type = 'response')
+t1 = table(test.data.set$Churn, p1 > 0.3)
+t1
+TN1 = t1[1]
+FN1 = t1[2]
+FP1 = t1[3]
+TP1 = t1[4]
+
+TN1
+FN1
+FP1
+TP1
+
+Accuary1 = (TP1+TN1)/(TP1+TN1+FP1+FN1)
+Precision1 = (TP1)/(TP1+FP1)
+Recall1 = (TP1)/(TP1+FN1)
+F11 = 2*Precision1*Recall1/(Precision1+Recall1)
+
+Accuary1
+Precision1
+Recall1
+F11
+```
