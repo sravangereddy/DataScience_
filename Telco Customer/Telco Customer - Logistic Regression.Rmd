@@ -4,8 +4,10 @@ output: html_notebook
 ---
 Loading required packages
 ```{r}
+#install.packages("ROCR")
 library(ggplot2)
 library(corrplot)
+library(ROCR)
 ```
 
 
@@ -138,7 +140,10 @@ summary(m1)
 ```
 ```{r}
 p1 = predict(m1, train.data.set, type = 'response')
-t1 = table(train.data.set$Churn, p1 > 0.3)
+pred2 = prediction(p1,train.data.set$Churn)
+perf = performance(pred2,"tpr","fpr")
+plot(perf,colorize = T)
+t1 = table(train.data.set$Churn, p1 > 0.45)
 t1
 TN1 = t1[1]
 FN1 = t1[2]
@@ -163,7 +168,12 @@ F11
 
 ```{r}
 p1 = predict(m1, test.data.set, type = 'response')
-t1 = table(test.data.set$Churn, p1 > 0.3)
+pred2 = prediction(p1,test.data.set$Churn)
+perf = performance(pred2,"tpr","fpr")
+plot(perf,colorize = T)
+
+
+t1 = table(test.data.set$Churn, p1 > 0.45)
 t1
 TN1 = t1[1]
 FN1 = t1[2]
@@ -208,9 +218,14 @@ Applying Logistic Regression
 m1 <- glm (Churn ~ ., data = train.data.set, family = binomial)
 summary(m1)
 ```
+
+
 ```{r}
 p1 = predict(m1, train.data.set, type = 'response')
-t1 = table(train.data.set$Churn, p1 > 0.3)
+pred2 = prediction(p1,train.data.set$Churn)
+perf = performance(pred2,"tpr","fpr")
+plot(perf,colorize = T)
+t1 = table(train.data.set$Churn, p1 > 0.45)
 t1
 TN1 = t1[1]
 FN1 = t1[2]
@@ -235,7 +250,12 @@ F11
 
 ```{r}
 p1 = predict(m1, test.data.set, type = 'response')
-t1 = table(test.data.set$Churn, p1 > 0.3)
+pred2 = prediction(p1,test.data.set$Churn)
+perf = performance(pred2,"tpr","fpr")
+plot(perf,colorize = T)
+
+
+t1 = table(test.data.set$Churn, p1 > 0.45)
 t1
 TN1 = t1[1]
 FN1 = t1[2]
@@ -257,3 +277,6 @@ Precision1
 Recall1
 F11
 ```
+
+
+
