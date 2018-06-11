@@ -1,0 +1,13 @@
+# Lot Frontage
+x = house_prices_df.loc[house_prices_df["LotFrontage"] >= 0].copy()
+# type(house_prices_df["LotFrontage"])
+bins = np.linspace(0, 220000, 60)
+x["binned_LotArea"] = np.digitize(x["LotArea"], bins)
+
+# house_prices_df["LotForntage_isnull"] = house_prices_df["LotFrontage"]>=0
+# house_prices_df.describe(include="all")
+# sn.regplot(x="LotFrontage", y="LotArea", data=house_prices_df)
+sn.boxplot(y="LotFrontage", x="binned_LotArea", data=x)
+# sn.boxplot(y="LotFrontage", x="MSSubClass", data=x)
+
+GarageType,GarageYrBlt,GarageFinish,GarageQual,GarageCond
