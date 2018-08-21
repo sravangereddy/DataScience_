@@ -2,4 +2,4 @@
 List of all the data sets and R/Python codes developed.
 
 
-Oh, the underscore is just to make me look geeky ;)
+Oh, the underscore is just a Scikit's way of saying that I learnt Data Science ;)
